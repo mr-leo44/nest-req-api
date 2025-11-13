@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16
+    container_name: requisition_db
+    restart: always
+    environment:
+      POSTGRES_USER: mrleo44
+      POSTGRES_PASSWORD: Ikigai
+      POSTGRES_DB: requisition_app
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
