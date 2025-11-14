@@ -1,17 +1,17 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto } from '../users/dto/login.dto';
+import { LoginDto } from './dto/login.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
-@ApiTags('auth')
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
-  @ApiOperation({ summary: 'Login utilisateur' })
-  @ApiResponse({ status: 200, description: 'Token JWT + user' })
-  async login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  @ApiOperation({ summary: 'Connexion d’un utilisateur' })
+  @ApiResponse({ status: 200, description: 'Retourne un token JWT' })
+  login(@Body() loginDto: LoginDto) {
+    return this.authService.login(loginDto);
   }
 }
