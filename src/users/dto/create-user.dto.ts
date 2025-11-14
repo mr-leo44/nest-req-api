@@ -1,53 +1,25 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsString, IsOptional } from 'class-validator';
 
 export class CreateUserDto {
-  @ApiProperty({ example: 'Lionel' })
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  @ApiProperty({ description: 'Prénom de l’utilisateur' })
   @IsString()
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  @IsNotEmpty()
   firstname: string;
 
-  @ApiProperty({ example: 'Kaniki' })
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  @ApiProperty({ description: 'Nom de famille de l’utilisateur' })
   @IsString()
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  @IsNotEmpty()
   lastname: string;
 
-  @ApiProperty({ example: 'lionel@example.com' })
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  @ApiProperty({ description: 'Email de l’utilisateur' })
   @IsEmail()
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  @IsNotEmpty()
   email: string;
 
-  @ApiProperty({ required: false, example: '+243999999999' })
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  @ApiProperty({ description: 'Mot de passe de l’utilisateur' })
+  @IsString()
+  password: string;
+
+  @ApiProperty({ description: 'Téléphone', required: false })
   @IsOptional()
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   @IsString()
   phone?: string;
-
-  @ApiProperty({ required: false, example: 'https://avatar.url/image.png' })
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  @IsOptional()
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  @IsString()
-  avatarUrl?: string;
-
-  @ApiProperty({ required: false, example: 'Africa/Kinshasa' })
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  @IsOptional()
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  @IsString()
-  timezone?: string;
-
-  @ApiProperty({ required: false, example: 'fr' })
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  @IsOptional()
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  @IsString()
-  locale?: string;
 }
