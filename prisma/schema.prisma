@@ -61,15 +61,19 @@ model User {
   lastname  String
   email     String  @unique
   password  String
+  phone     String? // optionnel
+  avatarUrl String? // optionnel
+  timezone  String? // optionnel
+  locale    String? // optionnel
   isActive  Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  companies           UserCompany[]
+  // relations (existants dans ton schema global)
+  companies           UserCompany[] // pivot user-company
   delegationsGiven    Delegation[]  @relation("DelegationGiver")
   delegationsReceived Delegation[]  @relation("DelegationReceiver")
-
   requisitionsCreated Requisition[] @relation("Requester")
   approvals           Approval[]    @relation("UserApproval")
   approvers           Approver[]
