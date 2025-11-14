@@ -6,3 +6,197 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  divisions Division[]
+  roles     Role[] // roles personnalisés pour chaque entreprise
+  users     UserCompany[] // association user <-> company multiple
+
+  requisitions Requisition[]
+  delegations  Delegation[]
+
+  @@index([slug])
+}
+
+// ------------------------------
+model Division {
+  id        String @id @default(uuid())
+  name      String
+  companyId String
+
+  company     Company      @relation(fields: [companyId], references: [id])
+  departments Department[]
+  approvers   Approver[] // validateurs de ce niveau
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ------------------------------
+model Department {
+  id         String @id @default(uuid())
+  name       String
+  divisionId String
+
+  division  Division @relation(fields: [divisionId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users UserCompany[]
+}
+
+// ---------------------------------------------------------
+// UTILISATEURS & ROLES PERSONNALISABLES
+// ---------------------------------------------------------
+
+model User {
+  id        String  @id @default(uuid())
+  firstname String
+  lastname  String
+  email     String  @unique
+  password  String
+  isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  companies           UserCompany[]
+  delegationsGiven    Delegation[]  @relation("DelegationGiver")
+  delegationsReceived Delegation[]  @relation("DelegationReceiver")
+
+  requisitionsCreated Requisition[] @relation("Requester")
+  approvals           Approval[]    @relation("UserApproval")
+  approvers           Approver[]
+}
+
+// Pivot table user <-> company avec role dynamique
+model UserCompany {
+  id           String  @id @default(uuid())
+  userId       String
+  companyId    String
+  roleId       String? // car roles personnalisables par company
+  departmentId String?
+
+  user       User        @relation(fields: [userId], references: [id])
+  company    Company     @relation(fields: [companyId], references: [id])
+  role       Role?       @relation(fields: [roleId], references: [id])
+  department Department? @relation(fields: [departmentId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, companyId]) // un user ne peut avoir qu'un role par company
+}
+
+// Roles dynamiques configurés par chaque entreprise
+model Role {
+  id        String @id @default(uuid())
+  name      String
+  level     Int // ordre dans l'organigramme (ex: 1 = chef de division, 2 = service, etc.)
+  companyId String
+
+  company Company       @relation(fields: [companyId], references: [id])
+  users   UserCompany[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Validateurs d’un niveau (division, département)
+model Approver {
+  id         String @id @default(uuid())
+  userId     String
+  divisionId String // validateur du niveau division
+
+  user     User     @relation(fields: [userId], references: [id])
+  division Division @relation(fields: [divisionId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------
+// DÉLÉGATION — un user peut déléguer la validation
+// ---------------------------------------------------------
+
+model Delegation {
+  id         String   @id @default(uuid())
+  giverId    String
+  receiverId String
+  companyId  String
+  startDate  DateTime
+  endDate    DateTime
+  isActive   Boolean  @default(true)
+
+  giver    User    @relation("DelegationGiver", fields: [giverId], references: [id])
+  receiver User    @relation("DelegationReceiver", fields: [receiverId], references: [id])
+  company  Company @relation(fields: [companyId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------
+// REQUISITIONS (DEMANDES) + APPROBATIONS
+// ---------------------------------------------------------
+
+model Requisition {
+  id                String            @id @default(uuid())
+  companyId         String
+  requesterId       String
+  itemLabel         String
+  quantityRequested Int
+  quantityDelivered Int? // mis à jour à la livraison
+  status            RequisitionStatus @default(PENDING)
+  pdfPath           String? // bon généré au moment de la demande
+  deliveryPdfPath   String? // bon généré à la livraison
+
+  company   Company @relation(fields: [companyId], references: [id])
+  requester User    @relation("Requester", fields: [requesterId], references: [id])
+
+  approvals Approval[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Approval {
+  id            String         @id @default(uuid())
+  requisitionId String
+  approverId    String
+  level         Int // niveau du flow (ex: 1 = chef division)
+  status        ApprovalStatus @default(PENDING)
+  comment       String?
+
+  requisition Requisition @relation(fields: [requisitionId], references: [id])
+  approver    User        @relation("UserApproval", fields: [approverId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------
+// ENUMS — statuts
+// ---------------------------------------------------------
+
+enum RequisitionStatus {
+  PENDING
+  PARTIALLY_APPROVED
+  APPROVED
+  REJECTED
+  DELIVERED
+  CLOSED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FORWARDED
+}
